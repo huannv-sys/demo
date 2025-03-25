@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Mikrotik Dashboard
 
 Đây là ứng dụng giám sát và quản lý thiết bị Mikrotik RouterOS với giao diện tiếng Việt. Ứng dụng cho phép theo dõi trạng thái, cấu hình và hiệu suất của nhiều thiết bị RouterOS trên nhiều site khác nhau.
@@ -115,3 +116,6 @@ http://<IP_máy_chủ>:5000
 ## Giấy phép
 
 ISC License
+=======
+# demo
+>>>>>>> e0561e75b6ff563be81190096864d2570327f73b
