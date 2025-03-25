@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>API Documentation | Mikrotik Dashboard</title>
+  <link rel="stylesheet" href="/style.css">
+  <style>
+    .api-endpoint {
+      margin-bottom: 30px;
+      border-bottom: 1px solid #eee;
+      padding-bottom: 20px;
+    }
+    
+    .endpoint-path {
+      background-color: #f8f9fa;
+      padding: 10px;
+      border-radius: 4px;
+      font-family: monospace;
+      margin: 10px 0;
+      display: inline-block;
+    }
+    
+    .http-method {
+      font-weight: bold;
+      color: #fff;
+      padding: 3px 8px;
+      border-radius: 3px;
+      display: inline-block;
+      margin-right: 10px;
+    }
+    
+    .get {
+      background-color: #61affe;
+    }
+    
+    .post {
+      background-color: #49cc90;
+    }
+    
+    .put {
+      background-color: #fca130;
+    }
+    
+    .delete {
+      background-color: #f93e3e;
+    }
+    
+    .response-example {
+      background-color: #272822;
+      color: #f8f8f2;
+      padding: 15px;
+      border-radius: 4px;
+      font-family: monospace;
+      overflow-x: auto;
+      margin: 10px 0;
+    }
+    
+    .try-it {
+      margin-top: 15px;
+    }
+    
+    .result {
+      margin-top: 10px;
+      padding: 10px;
+      background-color: #f7f7f7;
+      border-radius: 4px;
+      max-height: 300px;
+      overflow-y: auto;
+      font-family: monospace;
+      white-space: pre-wrap;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>Tài liệu API</h1>
+      <div>
+        <a href="/api" class="button">API</a>
+        <a href="/" class="button">Trang chủ</a>
+        <a href="/help.html" class="button">Trợ giúp</a>
+        <a href="/config.html" class="button">Cấu hình</a>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Tổng quan API</h2>
+      <p>Mikrotik Dashboard cung cấp các API RESTful để truy cập và quản lý thông tin router Mikrotik. Tất cả các API đều trả về dữ liệu dưới dạng JSON.</p>
+      <p>URL cơ sở: <code>/api</code></p>
+    </div>
+    
+    <div class="api-endpoint">
+      <h3>Danh sách Router</h3>
+      <div>
+        <span class="http-method get">GET</span>
+        <span class="endpoint-path">/api/routers</span>
+      </div>
+      <p>Trả về danh sách tất cả các router được cấu hình trong hệ thống với thông tin cơ bản.</p>
+      
+      <h4>Phản hồi mẫu:</h4>
+      <div class="response-example">
+[
+  {
+    "id": 1,
+    "name": "Mikrotik Router 1",
+    "ip": "192.168.88.1",
+    "model": "hAP lite",
+    "clientName": "Office",
+    "status": "offline"
+  }
+]</div>
+      
+      <div class="try-it">
+        <button class="button" onclick="testAPI('/api/routers', 'routersResult')">Thử ngay</button>
+        <div id="routersResult" class="result"></div>
+      </div>
+    </div>
+    
+    <div class="api-endpoint">
+      <h3>Trạng thái Router</h3>
+      <div>
+        <span class="http-method get">GET</span>
+        <span class="endpoint-path">/api/routers/status</span>
+      </div>
+      <p>Trả về trạng thái hiện tại của tất cả các router, bao gồm thông tin nâng cao nếu router đang online.</p>
+      
+      <h4>Phản hồi mẫu:</h4>
+      <div class="response-example">
+[
+  {
+    "id": 1,
+    "status": "online",
+    "uptime": "1d12h30m",
+    "version": "6.48.4",
+    "cpuLoad": "10"
+  }
+]</div>
+      
+      <div class="try-it">
+        <button class="button" onclick="testAPI('/api/routers/status', 'statusResult')">Thử ngay</button>
+        <div id="statusResult" class="result"></div>
+      </div>
+    </div>
+    
+    <div class="api-endpoint">
+      <h3>Danh sách Interface</h3>
+      <div>
+        <span class="http-method get">GET</span>
+        <span class="endpoint-path">/api/interfaces</span>
+      </div>
+      <p>Trả về danh sách tất cả các interface từ tất cả các router online, bao gồm thông tin cơ bản và thống kê lưu lượng.</p>
+      
+      <h4>Phản hồi mẫu:</h4>
+      <div class="response-example">
+[
+  {
+    "routerId": 1,
+    "name": "ether1",
+    "type": "ethernet",
+    "status": "up",
+    "rxBytes": "2.5 GB",
+    "txBytes": "1.2 GB",
+    "rxRate": "1.2 Mbps",
+    "txRate": "650 Kbps"
+  }
+]</div>
+      
+      <div class="try-it">
+        <button class="button" onclick="testAPI('/api/interfaces', 'interfacesResult')">Thử ngay</button>
+        <div id="interfacesResult" class="result"></div>
+      </div>
+    </div>
+  </div>
+  
+  <script>
+    function testAPI(endpoint, resultId) {
+      const resultElement = document.getElementById(resultId);
+      resultElement.style.display = 'block';
+      resultElement.textContent = 'Đang tải...';
+      
+      fetch(endpoint)
+        .then(response => {
+          if (!response.ok) {
+            throw new Error(`HTTP error! Status: ${response.status}`);
+          }
+          return response.json();
+        })
+        .then(data => {
+          resultElement.textContent = JSON.stringify(data, null, 2);
+        })
+        .catch(error => {
+          resultElement.textContent = `Lỗi: ${error.message}`;
+        });
+    }
+    
+    // Tự động chuyển hướng từ /api đến trang này
+    if (window.location.pathname === '/api') {
+      window.location.href = '/api-docs.html';
+    }
+  </script>
+</body>
+</html>

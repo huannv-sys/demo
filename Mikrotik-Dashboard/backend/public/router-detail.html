@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chi tiết Router | Mikrotik Dashboard</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>Chi tiết Router</h1>
+      <div>
+        <a href="/api" class="button">API</a>
+        <a href="/" class="button">Trang chủ</a>
+        <a href="/dashboard.html" class="button">Dashboard</a>
+        <a href="/help.html" class="button">Trợ giúp</a>
+        <a href="/config.html" class="button">Cấu hình</a>
+      </div>
+    </div>
+
+    <div id="routerDetail">
+      <div class="card" id="routerInfo">
+        <p>Đang tải thông tin router...</p>
+      </div>
+      
+      <h2>Các Interface</h2>
+      <div id="interfaces">
+        <div class="card">
+          <p>Đang tải danh sách interface...</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const routerInfo = document.getElementById('routerInfo');
+      const interfaces = document.getElementById('interfaces');
+      
+      // Lấy ID router từ URL
+      const urlParams = new URLSearchParams(window.location.search);
+      const routerId = urlParams.get('id');
+      
+      if (!routerId) {
+        routerInfo.innerHTML = `
+          <p>Lỗi: Không tìm thấy ID router trong URL.</p>
+          <a href="/" class="button">Quay lại danh sách</a>
+        `;
+        return;
+      }
+      
+      // Lấy thông tin router
+      fetch(`/api/routers`)
+        .then(response => response.json())
+        .then(routers => {
+          const router = routers.find(r => r.id == routerId);
+          
+          if (!router) {
+            routerInfo.innerHTML = `
+              <p>Không tìm thấy router với ID ${routerId}.</p>
+              <a href="/" class="button">Quay lại danh sách</a>
+            `;
+            return;
+          }
+          
+          // Hiển thị thông tin router
+          routerInfo.innerHTML = `
+            <h2>${router.name}</h2>
+            <p><strong>IP:</strong> ${router.ip}</p>
+            <p><strong>Model:</strong> ${router.model}</p>
+            <p><strong>Khách hàng:</strong> ${router.clientName}</p>
+            <p><strong>Trạng thái:</strong> <span class="status-badge status-${router.status}">${router.status === 'online' ? 'Hoạt động' : router.status === 'offline' ? 'Không hoạt động' : 'Không xác định'}</span></p>
+          `;
+          
+          // Sau khi hiển thị thông tin cơ bản, lấy trạng thái router
+          return fetch('/api/routers/status');
+        })
+        .then(response => response.json())
+        .then(statusList => {
+          // Tìm trạng thái của router hiện tại
+          const routerStatus = statusList.find(s => s.id == routerId);
+          
+          if (routerStatus) {
+            // Cập nhật thông tin trạng thái
+            const statusElement = routerInfo.querySelector('.status-badge');
+            if (statusElement) {
+              statusElement.className = `status-badge status-${routerStatus.status}`;
+              statusElement.textContent = routerStatus.status === 'online' ? 'Hoạt động' : routerStatus.status === 'offline' ? 'Không hoạt động' : 'Không xác định';
+            }
+            
+            // Thêm thông tin bổ sung nếu router online
+            if (routerStatus.status === 'online') {
+              routerInfo.innerHTML += `
+                <div class="status-details">
+                  <p><strong>Phiên bản:</strong> ${routerStatus.version || 'N/A'}</p>
+                  <p><strong>Thời gian hoạt động:</strong> ${routerStatus.uptime || 'N/A'}</p>
+                  <p><strong>CPU:</strong> ${routerStatus.cpuLoad || '0'}%</p>
+                </div>
+              `;
+            }
+          }
+          
+          // Lấy danh sách interface
+          return fetch('/api/interfaces');
+        })
+        .then(response => response.json())
+        .then(allInterfaces => {
+          // Lọc interface của router hiện tại
+          const routerInterfaces = allInterfaces.filter(iface => iface.routerId == routerId);
+          
+          interfaces.innerHTML = '';
+          
+          if (routerInterfaces.length === 0) {
+            interfaces.innerHTML = '<div class="card"><p>Không có interface nào hoặc router đang offline.</p></div>';
+            return;
+          }
+          
+          // Hiển thị từng interface
+          routerInterfaces.forEach(iface => {
+            const interfaceCard = document.createElement('div');
+            interfaceCard.className = 'card';
+            interfaceCard.innerHTML = `
+              <h3>${iface.name}</h3>
+              <p><strong>Loại:</strong> ${iface.type}</p>
+              <p><strong>Trạng thái:</strong> <span class="status-badge status-${iface.status === 'up' ? 'online' : 'offline'}">${iface.status === 'up' ? 'Hoạt động' : 'Không hoạt động'}</span></p>
+              
+              <div class="traffic-stats">
+                <div>
+                  <p><strong>Đã nhận:</strong> ${iface.rxBytes}</p>
+                  <p><strong>Tốc độ nhận:</strong> ${iface.rxRate}</p>
+                </div>
+                <div>
+                  <p><strong>Đã gửi:</strong> ${iface.txBytes}</p>
+                  <p><strong>Tốc độ gửi:</strong> ${iface.txRate}</p>
+                </div>
+              </div>
+            `;
+            interfaces.appendChild(interfaceCard);
+          });
+        })
+        .catch(error => {
+          routerInfo.innerHTML = `
+            <p>Lỗi khi tải thông tin: ${error.message}</p>
+            <a href="/" class="button">Quay lại danh sách</a>
+          `;
+        });
+    });
+  </script>
+</body>
+</html>

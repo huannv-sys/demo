@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mikrotik Dashboard</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>Mikrotik Dashboard</h1>
+      <div>
+        <a href="/api" class="button">API</a>
+        <a href="/" class="button">Trang chủ</a>
+        <a href="/dashboard.html" class="button">Dashboard</a>
+        <a href="/sites.html" class="button">Quản lý Site</a>
+        <a href="/help.html" class="button">Trợ giúp</a>
+        <a href="/config.html" class="button">Cấu hình</a>
+      </div>
+    </div>
+
+    <div id="routerList">
+      <h2>Danh sách Router</h2>
+      <div class="grid" id="routerGrid">
+        <div class="card">
+          <p>Đang tải...</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const routerGrid = document.getElementById('routerGrid');
+      let routerStatusData = {};
+      
+      // Lấy trạng thái router trước
+      fetch('/api/routers/status')
+        .then(response => response.json())
+        .then(statuses => {
+          // Tạo đối tượng nhìn nhanh để tra cứu trạng thái
+          statuses.forEach(status => {
+            routerStatusData[status.id] = status;
+          });
+          
+          // Sau đó lấy danh sách router
+          return fetch('/api/routers');
+        })
+        .then(response => response.json())
+        .then(routers => {
+          // Xóa thông báo "Đang tải..."
+          routerGrid.innerHTML = '';
+          
+          // Nhóm router theo site
+          const siteMap = {};
+          
+          routers.forEach(router => {
+            const siteId = router.siteId || 'default';
+            const siteName = router.siteName || 'Site mặc định';
+            
+            if (!siteMap[siteId]) {
+              siteMap[siteId] = {
+                id: siteId,
+                name: siteName,
+                routers: []
+              };
+            }
+            
+            // Thêm thông tin trạng thái từ cache
+            const status = routerStatusData[router.id] ? 
+              routerStatusData[router.id].status : 'unknown';
+            
+            siteMap[siteId].routers.push({
+              ...router,
+              status: status
+            });
+          });
+          
+          // Hiển thị thông tin về mỗi router theo site
+          Object.values(siteMap).forEach(site => {
+            // Tạo header cho site
+            const siteHeader = document.createElement('div');
+            siteHeader.className = 'site-header';
+            siteHeader.innerHTML = `
+              <h3>${site.name}</h3>
+              <p>Số lượng thiết bị: ${site.routers.length}</p>
+              <a href="/sites.html" class="button small">Quản lý Site</a>
+            `;
+            routerGrid.appendChild(siteHeader);
+            
+            // Hiển thị các router trong site
+            site.routers.forEach(router => {
+              const routerCard = document.createElement('div');
+              routerCard.className = 'card';
+              routerCard.innerHTML = `
+                <h3>${router.name}</h3>
+                <p>IP: ${router.ip}</p>
+                <p>Model: ${router.model}</p>
+                <p>Khách hàng: ${router.clientName}</p>
+                <p>Site: ${site.name}</p>
+                <p>Trạng thái: <span class="status-badge status-${router.status}">${router.status === 'online' ? 'Hoạt động' : router.status === 'offline' ? 'Không hoạt động' : 'Không xác định'}</span></p>
+                <a href="/router-detail.html?id=${router.id}" class="button">Chi tiết</a>
+              `;
+              routerGrid.appendChild(routerCard);
+            });
+          });
+          
+          // Nếu không có router nào
+          if (routers.length === 0) {
+            routerGrid.innerHTML = '<div class="card"><p>Không tìm thấy router nào.</p></div>';
+          }
+        })
+        .catch(error => {
+          console.error("Error:", error);
+          routerGrid.innerHTML = `
+            <div class="card">
+              <p>Lỗi khi tải danh sách router: ${error.message}</p>
+            </div>
+          `;
+        });
+    });
+  </script>
+  
+  <style>
+    .site-header {
+      background-color: #f5f5f5;
+      padding: 10px 15px;
+      margin: 15px 0 10px 0;
+      border-radius: 5px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    
+    .site-header h3 {
+      margin: 0;
+      color: #333;
+    }
+    
+    .site-header p {
+      margin: 0;
+      color: #666;
+    }
+    
+    .button.small {
+      padding: 5px 10px;
+      font-size: 0.8rem;
+    }
+  </style>
+</body>
+</html>

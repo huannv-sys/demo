@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Trợ giúp | Mikrotik Dashboard</title>
+  <link rel="stylesheet" href="/style.css">
+  <style>
+    .help-section {
+      margin-bottom: 30px;
+    }
+    
+    .help-section h3 {
+      margin-top: 20px;
+      border-bottom: 1px solid #eee;
+      padding-bottom: 10px;
+    }
+    
+    .tip {
+      background-color: #f8f9fa;
+      padding: 15px;
+      border-left: 4px solid #3498db;
+      margin: 15px 0;
+    }
+    
+    .warning {
+      background-color: #fff3cd;
+      padding: 15px;
+      border-left: 4px solid #ffc107;
+      margin: 15px 0;
+    }
+    
+    ol, ul {
+      padding-left: 20px;
+    }
+    
+    code {
+      background-color: #f8f9fa;
+      padding: 2px 4px;
+      border-radius: 4px;
+      font-family: monospace;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>Trợ giúp sử dụng Mikrotik Dashboard</h1>
+      <div>
+        <a href="/api" class="button">API</a>
+        <a href="/" class="button">Trang chủ</a>
+        <a href="/help.html" class="button">Trợ giúp</a>
+        <a href="/config.html" class="button">Cấu hình</a>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Giới thiệu</h2>
+      <p>Mikrotik Dashboard là ứng dụng web cho phép bạn giám sát và quản lý các thiết bị Mikrotik từ một giao diện thống nhất. 
+      Ứng dụng này giúp bạn dễ dàng theo dõi trạng thái của các router, lưu lượng mạng và các thông số quan trọng khác.</p>
+    </div>
+    
+    <div class="help-section">
+      <h2>Hướng dẫn sử dụng</h2>
+      
+      <h3>1. Trang chủ - Danh sách Router</h3>
+      <p>Trang chủ hiển thị danh sách tất cả các router Mikrotik đã được cấu hình trong hệ thống. Mỗi router được hiển thị trong một thẻ với các thông tin cơ bản:</p>
+      <ul>
+        <li><strong>Tên router</strong>: Tên đã được đặt cho thiết bị</li>
+        <li><strong>Địa chỉ IP</strong>: Địa chỉ IP của router</li>
+        <li><strong>Model</strong>: Loại thiết bị Mikrotik</li>
+        <li><strong>Khách hàng</strong>: Tên khách hàng sở hữu router</li>
+        <li><strong>Trạng thái</strong>: Hiển thị trạng thái hiện tại của router (online/offline/unknown)</li>
+      </ul>
+      <p>Từ trang chủ, bạn có thể nhấp vào nút "Chi tiết" để xem thông tin chi tiết về một router cụ thể.</p>
+      
+      <div class="tip">
+        <p><strong>Mẹo</strong>: Nếu bạn không thấy router nào trong danh sách, hãy kiểm tra lại tệp cấu hình .env và đảm bảo rằng các thông tin router đã được cấu hình đúng.</p>
+      </div>
+      
+      <h3>2. Trang chi tiết Router</h3>
+      <p>Trang chi tiết router cung cấp thông tin toàn diện về một router cụ thể, bao gồm:</p>
+      <ul>
+        <li><strong>Thông tin cơ bản</strong>: Tên, IP, model, khách hàng và trạng thái</li>
+        <li><strong>Thông tin hệ thống</strong>: Phiên bản RouterOS, thời gian hoạt động và mức sử dụng CPU</li>
+        <li><strong>Danh sách interface</strong>: Tất cả các interface mạng trên router với các thông số như:</li>
+        <ul>
+          <li>Tên và loại interface</li>
+          <li>Trạng thái (hoạt động/không hoạt động)</li>
+          <li>Thống kê lưu lượng (dữ liệu đã nhận/gửi và tốc độ hiện tại)</li>
+        </ul>
+      </ul>
+      
+      <div class="warning">
+        <p><strong>Lưu ý</strong>: Nếu router đang offline, thông tin về interface và các thống kê sẽ không được hiển thị.</p>
+      </div>
+      
+      <h3>3. Trang Cấu hình</h3>
+      <p>Trang cấu hình cung cấp mẫu và hướng dẫn để thêm router mới vào hệ thống. Trên trang này bạn có thể:</p>
+      <ul>
+        <li>Xem mẫu định dạng cấu hình router trong tệp <code>.env</code></li>
+        <li>Sử dụng mẫu để nhập thông tin router mới</li>
+        <li>Tạo mã cấu hình để sao chép vào tệp <code>.env</code></li>
+      </ul>
+      <p>Lưu ý rằng trang này chỉ tạo mã cấu hình, không thực sự thêm router vào hệ thống. Bạn sẽ cần cập nhật tệp <code>.env</code> và khởi động lại máy chủ.</p>
+      
+      <h3>4. Tài liệu API</h3>
+      <p>Mikrotik Dashboard cung cấp API cho phép tích hợp với các hệ thống khác. Bạn có thể truy cập tài liệu API chi tiết bằng cách nhấp vào nút "API" ở trên cùng của trang. Trên trang tài liệu API, bạn có thể:</p>
+      <ul>
+        <li>Xem tài liệu chi tiết về từng API endpoint</li>
+        <li>Thử nghiệm trực tiếp các API</li>
+        <li>Xem mẫu dữ liệu phản hồi từ API</li>
+      </ul>
+      <p>Các endpoint API chính bao gồm:</p>
+      <ul>
+        <li><code>/api/routers</code>: Danh sách tất cả router</li>
+        <li><code>/api/routers/status</code>: Trạng thái của tất cả router</li>
+        <li><code>/api/interfaces</code>: Liệt kê tất cả interface của router</li>
+      </ul>
+    </div>
+    
+    <div class="help-section">
+      <h2>Cấu hình Router</h2>
+      <p>Để thêm hoặc chỉnh sửa router trong hệ thống, bạn cần cập nhật tệp cấu hình <code>.env</code> với định dạng sau:</p>
+      <pre><code>ROUTER1_IP=192.168.88.1
+ROUTER1_NAME=Mikrotik Router 1
+ROUTER1_USER=admin
+ROUTER1_PASSWORD=password_của_bạn
+ROUTER1_MODEL=hAP lite
+ROUTER1_CLIENT=Office</code></pre>
+      
+      <p>Để thêm router thứ hai, bạn chỉ cần thêm các dòng tương tự với số chỉ mục tăng lên:</p>
+      <pre><code>ROUTER2_IP=192.168.89.1
+ROUTER2_NAME=Mikrotik Router 2
+...</code></pre>
+      
+      <div class="tip">
+        <p><strong>Mẹo</strong>: Sau khi cập nhật tệp cấu hình, bạn cần khởi động lại máy chủ để áp dụng các thay đổi.</p>
+      </div>
+    </div>
+    
+    <div class="help-section">
+      <h2>Xử lý sự cố</h2>
+      
+      <h3>Router hiển thị là "offline"</h3>
+      <ol>
+        <li>Kiểm tra kết nối mạng giữa máy chủ và router</li>
+        <li>Xác minh rằng địa chỉ IP của router trong tệp cấu hình là chính xác</li>
+        <li>Đảm bảo rằng tên người dùng và mật khẩu được cấu hình đúng</li>
+        <li>Kiểm tra xem API của Mikrotik có được bật trên router hay không</li>
+      </ol>
+      
+      <h3>Không thể xem thông tin interface</h3>
+      <ol>
+        <li>Đảm bảo router đang online</li>
+        <li>Kiểm tra xem người dùng đã được cấu hình có đủ quyền để truy cập thông tin interface hay không</li>
+        <li>Xác minh rằng giao thức API của Mikrotik không bị chặn bởi tường lửa</li>
+      </ol>
+      
+      <h3>Dữ liệu lưu lượng không chính xác</h3>
+      <p>Dữ liệu lưu lượng được cập nhật theo thời gian thực khi bạn truy cập trang. Nếu bạn cho rằng dữ liệu không chính xác:</p>
+      <ol>
+        <li>Làm mới trang để cập nhật dữ liệu mới nhất</li>
+        <li>Đảm bảo rằng đồng hồ hệ thống trên router và máy chủ được đồng bộ hóa</li>
+        <li>Kiểm tra xem có bất kỳ thiết bị trung gian nào có thể đang lưu trữ dữ liệu không</li>
+      </ol>
+    </div>
+    
+    <footer class="card" style="margin-top: 30px; text-align: center;">
+      <p>Mikrotik Dashboard © 2023 | <a href="mailto:support@example.com">Hỗ trợ kỹ thuật</a></p>
+    </footer>
+  </div>
+</body>
+</html>

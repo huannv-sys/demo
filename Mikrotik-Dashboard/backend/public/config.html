@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cấu hình | Mikrotik Dashboard</title>
+  <link rel="stylesheet" href="/style.css">
+  <style>
+    .form-group {
+      margin-bottom: 15px;
+    }
+    
+    label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: bold;
+    }
+    
+    input[type="text"], 
+    input[type="password"] {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      box-sizing: border-box;
+    }
+    
+    .info-box {
+      background-color: #e2f0fb;
+      border-left: 4px solid #3498db;
+      padding: 15px;
+      margin-bottom: 20px;
+    }
+    
+    .env-example {
+      background-color: #f8f9fa;
+      padding: 15px;
+      border-radius: 4px;
+      overflow-x: auto;
+      font-family: monospace;
+      white-space: pre;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>Cấu hình Router</h1>
+      <div>
+        <a href="/api" class="button">API</a>
+        <a href="/" class="button">Trang chủ</a>
+        <a href="/help.html" class="button">Trợ giúp</a>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="info-box">
+        <h3>Thông tin quan trọng</h3>
+        <p>Trang này chỉ mang tính hướng dẫn. Để thêm hoặc chỉnh sửa router, bạn cần cập nhật trực tiếp tệp cấu hình <code>.env</code> của hệ thống và khởi động lại máy chủ.</p>
+      </div>
+      
+      <h2>Mẫu cấu hình Router</h2>
+      <p>Bên dưới là mẫu định dạng cấu hình router trong tệp <code>.env</code>:</p>
+      
+      <div class="env-example">
+PORT=5000
+
+# Router 1
+ROUTER1_IP=192.168.88.1
+ROUTER1_NAME=Mikrotik Router 1
+ROUTER1_USER=admin
+ROUTER1_PASSWORD=password_của_bạn
+ROUTER1_MODEL=hAP lite
+ROUTER1_CLIENT=Office
+
+# Router 2 
+ROUTER2_IP=192.168.89.1
+ROUTER2_NAME=Mikrotik Router 2
+ROUTER2_USER=admin
+ROUTER2_PASSWORD=password_của_bạn
+ROUTER2_MODEL=CCR1009
+ROUTER2_CLIENT=Branch Office</div>
+      
+      <h2>Mẫu thông tin router</h2>
+      <p>Sử dụng mẫu dưới đây để tổ chức thông tin router trước khi thêm vào tệp <code>.env</code>:</p>
+      
+      <form id="routerForm">
+        <div class="form-group">
+          <label for="routerNumber">Số thứ tự Router:</label>
+          <input type="text" id="routerNumber" placeholder="Ví dụ: 1, 2, 3..." value="1">
+        </div>
+        
+        <div class="form-group">
+          <label for="routerName">Tên Router:</label>
+          <input type="text" id="routerName" placeholder="Ví dụ: Router Văn Phòng">
+        </div>
+        
+        <div class="form-group">
+          <label for="routerIp">Địa chỉ IP:</label>
+          <input type="text" id="routerIp" placeholder="Ví dụ: 192.168.88.1">
+        </div>
+        
+        <div class="form-group">
+          <label for="routerUser">Tên người dùng:</label>
+          <input type="text" id="routerUser" placeholder="Ví dụ: admin" value="admin">
+        </div>
+        
+        <div class="form-group">
+          <label for="routerPassword">Mật khẩu:</label>
+          <input type="password" id="routerPassword" placeholder="Nhập mật khẩu router">
+        </div>
+        
+        <div class="form-group">
+          <label for="routerModel">Model:</label>
+          <input type="text" id="routerModel" placeholder="Ví dụ: hAP lite, CCR1009">
+        </div>
+        
+        <div class="form-group">
+          <label for="routerClient">Tên khách hàng/Vị trí:</label>
+          <input type="text" id="routerClient" placeholder="Ví dụ: Văn phòng chính, Chi nhánh A">
+        </div>
+        
+        <button type="button" class="button" id="generateButton">Tạo mã cấu hình</button>
+      </form>
+      
+      <div id="outputSection" style="display: none; margin-top: 20px;">
+        <h3>Mã cấu hình tạo ra:</h3>
+        <div class="env-example" id="outputConfig"></div>
+        <p>Sao chép đoạn mã trên và thêm vào tệp <code>.env</code>, sau đó khởi động lại máy chủ để áp dụng thay đổi.</p>
+      </div>
+    </div>
+  </div>
+  
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const generateButton = document.getElementById('generateButton');
+      const outputSection = document.getElementById('outputSection');
+      const outputConfig = document.getElementById('outputConfig');
+      
+      generateButton.addEventListener('click', function() {
+        const routerNumber = document.getElementById('routerNumber').value;
+        const routerName = document.getElementById('routerName').value;
+        const routerIp = document.getElementById('routerIp').value;
+        const routerUser = document.getElementById('routerUser').value;
+        const routerPassword = document.getElementById('routerPassword').value;
+        const routerModel = document.getElementById('routerModel').value;
+        const routerClient = document.getElementById('routerClient').value;
+        
+        // Tạo chuỗi cấu hình
+        const config = `# Router ${routerNumber}
+ROUTER${routerNumber}_IP=${routerIp}
+ROUTER${routerNumber}_NAME=${routerName}
+ROUTER${routerNumber}_USER=${routerUser}
+ROUTER${routerNumber}_PASSWORD=${routerPassword}
+ROUTER${routerNumber}_MODEL=${routerModel}
+ROUTER${routerNumber}_CLIENT=${routerClient}`;
+        
+        // Hiển thị kết quả
+        outputConfig.textContent = config;
+        outputSection.style.display = 'block';
+      });
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,1095 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard Giám Sát | Mikrotik Dashboard</title>
+  <link rel="stylesheet" href="/style.css">
+  <style>
+    .dashboard-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 20px;
+      margin-top: 20px;
+    }
+    
+    .dashboard-card {
+      background-color: #fff;
+      border-radius: 8px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      padding: 20px;
+      overflow: hidden;
+    }
+    
+    .dashboard-card h3 {
+      color: #333;
+      margin-top: 0;
+      border-bottom: 1px solid #eee;
+      padding-bottom: 10px;
+      font-size: 18px;
+    }
+    
+    .dashboard-tabs {
+      display: flex;
+      border-bottom: 1px solid #ddd;
+      margin-bottom: 20px;
+    }
+    
+    .dashboard-tab {
+      padding: 10px 20px;
+      cursor: pointer;
+      border: 1px solid transparent;
+      border-bottom: none;
+      margin-right: 5px;
+      border-radius: 4px 4px 0 0;
+    }
+    
+    .dashboard-tab.active {
+      background-color: #fff;
+      border-color: #ddd;
+      border-bottom-color: #fff;
+      margin-bottom: -1px;
+      font-weight: bold;
+    }
+    
+    .tab-content {
+      display: none;
+    }
+    
+    .tab-content.active {
+      display: block;
+    }
+    
+    .info-grid {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 10px;
+      align-items: start;
+    }
+    
+    .info-label {
+      font-weight: bold;
+      color: #666;
+    }
+    
+    .info-value {
+      color: #333;
+    }
+    
+    .status-badge {
+      display: inline-block;
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: bold;
+    }
+    
+    .status-active {
+      background-color: #d4edda;
+      color: #155724;
+    }
+    
+    .status-inactive {
+      background-color: #f8d7da;
+      color: #721c24;
+    }
+    
+    .loader {
+      border: 3px solid #f3f3f3;
+      border-radius: 50%;
+      border-top: 3px solid #3498db;
+      width: 20px;
+      height: 20px;
+      animation: spin 1s linear infinite;
+      margin: 20px auto;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+    
+    .data-table th, .data-table td {
+      padding: 8px;
+      text-align: left;
+      border-bottom: 1px solid #ddd;
+    }
+    
+    .data-table th {
+      background-color: #f8f9fa;
+    }
+    
+    .chart-container {
+      height: 200px;
+      margin-top: 20px;
+    }
+    
+    /* Responsive design */
+    @media (max-width: 768px) {
+      .dashboard-container {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>Dashboard Giám Sát Mikrotik</h1>
+      <div>
+        <a href="/api" class="button">API</a>
+        <a href="/" class="button">Trang chủ</a>
+        <a href="/help.html" class="button">Trợ giúp</a>
+      </div>
+    </div>
+    
+    <div class="content">
+      <div class="router-selector">
+        <label for="router-select">Chọn Router:</label>
+        <select id="router-select">
+          <option value="">Đang tải...</option>
+        </select>
+        <button id="refresh-btn" class="button">Làm mới dữ liệu</button>
+      </div>
+      
+      <div class="dashboard-tabs">
+        <div class="dashboard-tab active" data-tab="system">Hệ thống</div>
+        <div class="dashboard-tab" data-tab="network">Mạng</div>
+        <div class="dashboard-tab" data-tab="services">Dịch vụ</div>
+        <div class="dashboard-tab" data-tab="logs">Nhật ký & Người dùng</div>
+      </div>
+      
+      <!-- Tab nội dung: Hệ thống -->
+      <div id="system-tab" class="tab-content active">
+        <div class="dashboard-container">
+          <!-- Thông tin cơ bản -->
+          <div class="dashboard-card">
+            <h3>Thông tin cơ bản</h3>
+            <div id="basic-info" class="info-grid">
+              <div class="loader"></div>
+            </div>
+          </div>
+          
+          <!-- Thông tin phần cứng -->
+          <div class="dashboard-card">
+            <h3>Thông tin phần cứng</h3>
+            <div id="hardware-info" class="info-grid">
+              <div class="loader"></div>
+            </div>
+          </div>
+          
+          <!-- Tài nguyên hệ thống -->
+          <div class="dashboard-card">
+            <h3>Tài nguyên hệ thống</h3>
+            <div id="resource-info" class="info-grid">
+              <div class="loader"></div>
+            </div>
+          </div>
+          
+          <!-- Thông tin nhiệt độ và sức khỏe -->
+          <div class="dashboard-card">
+            <h3>Thông tin nhiệt độ và sức khỏe</h3>
+            <div id="health-info" class="info-grid">
+              <div class="loader"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Tab nội dung: Mạng -->
+      <div id="network-tab" class="tab-content">
+        <div class="dashboard-container">
+          <!-- Interfaces -->
+          <div class="dashboard-card" style="grid-column: 1 / -1;">
+            <h3>Interfaces</h3>
+            <div id="interface-info">
+              <div class="loader"></div>
+            </div>
+          </div>
+          
+          <!-- Địa chỉ IP -->
+          <div class="dashboard-card">
+            <h3>Địa chỉ IP</h3>
+            <div id="ip-address-info">
+              <div class="loader"></div>
+            </div>
+          </div>
+          
+          <!-- Bảng ARP -->
+          <div class="dashboard-card">
+            <h3>Bảng ARP</h3>
+            <div id="arp-table-info">
+              <div class="loader"></div>
+            </div>
+          </div>
+          
+          <!-- Bảng định tuyến -->
+          <div class="dashboard-card" style="grid-column: 1 / -1;">
+            <h3>Bảng định tuyến</h3>
+            <div id="routing-table-info">
+              <div class="loader"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Tab nội dung: Dịch vụ -->
+      <div id="services-tab" class="tab-content">
+        <div class="dashboard-container">
+          <!-- DHCP Server -->
+          <div class="dashboard-card">
+            <h3>DHCP Server</h3>
+            <div id="dhcp-server-info">
+              <div class="loader"></div>
+            </div>
+          </div>
+          
+          <!-- DHCP Leases -->
+          <div class="dashboard-card" style="grid-column: 1 / -1;">
+            <h3>DHCP Leases</h3>
+            <div id="dhcp-lease-info">
+              <div class="loader"></div>
+            </div>
+          </div>
+          
+          <!-- Firewall Rules -->
+          <div class="dashboard-card" style="grid-column: 1 / -1;">
+            <h3>Firewall Rules</h3>
+            <div id="firewall-rules-info">
+              <div class="loader"></div>
+            </div>
+          </div>
+          
+          <!-- NAT Rules -->
+          <div class="dashboard-card" style="grid-column: 1 / -1;">
+            <h3>NAT Rules</h3>
+            <div id="nat-rules-info">
+              <div class="loader"></div>
+            </div>
+          </div>
+          
+          <!-- Wireless -->
+          <div class="dashboard-card">
+            <h3>Wireless Networks</h3>
+            <div id="wireless-info">
+              <div class="loader"></div>
+            </div>
+          </div>
+          
+          <!-- Wireless Clients -->
+          <div class="dashboard-card">
+            <h3>Wireless Clients</h3>
+            <div id="wireless-clients-info">
+              <div class="loader"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Tab nội dung: Nhật ký & Người dùng -->
+      <div id="logs-tab" class="tab-content">
+        <div class="dashboard-container">
+          <!-- System Logs -->
+          <div class="dashboard-card" style="grid-column: 1 / -1;">
+            <h3>Nhật ký hệ thống</h3>
+            <div id="system-logs-info">
+              <div class="loader"></div>
+            </div>
+          </div>
+          
+          <!-- Users -->
+          <div class="dashboard-card">
+            <h3>Người dùng</h3>
+            <div id="users-info">
+              <div class="loader"></div>
+            </div>
+          </div>
+          
+          <!-- Thông tin dịch vụ khác -->
+          <div class="dashboard-card">
+            <h3>Thông tin dịch vụ khác</h3>
+            <div id="other-services-info" class="info-grid">
+              <div class="loader"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // Variables
+      let selectedRouterId = null;
+      let systemInfo = null;
+      let networkInfo = null;
+      let servicesInfo = null;
+      let logsInfo = null;
+      
+      // Tab switching
+      const tabs = document.querySelectorAll('.dashboard-tab');
+      tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+          // Remove active class from all tabs
+          tabs.forEach(t => t.classList.remove('active'));
+          // Add active class to clicked tab
+          tab.classList.add('active');
+          
+          // Hide all tab contents
+          document.querySelectorAll('.tab-content').forEach(content => {
+            content.classList.remove('active');
+          });
+          
+          // Show corresponding tab content
+          const tabId = tab.getAttribute('data-tab');
+          document.getElementById(`${tabId}-tab`).classList.add('active');
+        });
+      });
+      
+      // Load routers for selection
+      loadRouters();
+      
+      // Router selector change event
+      document.getElementById('router-select').addEventListener('change', function() {
+        selectedRouterId = this.value;
+        if (selectedRouterId) {
+          loadAllData(selectedRouterId);
+        }
+      });
+      
+      // Refresh button click event
+      document.getElementById('refresh-btn').addEventListener('click', function() {
+        if (selectedRouterId) {
+          loadAllData(selectedRouterId);
+        }
+      });
+      
+      // Functions
+      function loadRouters() {
+        fetch('/api/routers')
+          .then(response => response.json())
+          .then(data => {
+            const select = document.getElementById('router-select');
+            select.innerHTML = '';
+            
+            if (data.length === 0) {
+              select.innerHTML = '<option value="">Không tìm thấy router nào</option>';
+              return;
+            }
+            
+            data.forEach(router => {
+              const option = document.createElement('option');
+              option.value = router.id;
+              option.textContent = `${router.name} (${router.ip})`;
+              select.appendChild(option);
+            });
+            
+            // Select first router and load its data
+            selectedRouterId = data[0].id;
+            loadAllData(selectedRouterId);
+          })
+          .catch(error => {
+            console.error('Error loading routers:', error);
+            document.getElementById('router-select').innerHTML = 
+              '<option value="">Lỗi khi tải danh sách router</option>';
+          });
+      }
+      
+      function loadAllData(routerId) {
+        // Reset all sections to loading state
+        document.getElementById('basic-info').innerHTML = '<div class="loader"></div>';
+        document.getElementById('hardware-info').innerHTML = '<div class="loader"></div>';
+        document.getElementById('resource-info').innerHTML = '<div class="loader"></div>';
+        document.getElementById('health-info').innerHTML = '<div class="loader"></div>';
+        document.getElementById('interface-info').innerHTML = '<div class="loader"></div>';
+        document.getElementById('ip-address-info').innerHTML = '<div class="loader"></div>';
+        document.getElementById('arp-table-info').innerHTML = '<div class="loader"></div>';
+        document.getElementById('routing-table-info').innerHTML = '<div class="loader"></div>';
+        document.getElementById('dhcp-server-info').innerHTML = '<div class="loader"></div>';
+        document.getElementById('dhcp-lease-info').innerHTML = '<div class="loader"></div>';
+        document.getElementById('firewall-rules-info').innerHTML = '<div class="loader"></div>';
+        document.getElementById('nat-rules-info').innerHTML = '<div class="loader"></div>';
+        document.getElementById('wireless-info').innerHTML = '<div class="loader"></div>';
+        document.getElementById('wireless-clients-info').innerHTML = '<div class="loader"></div>';
+        document.getElementById('system-logs-info').innerHTML = '<div class="loader"></div>';
+        document.getElementById('users-info').innerHTML = '<div class="loader"></div>';
+        document.getElementById('other-services-info').innerHTML = '<div class="loader"></div>';
+        
+        // Load all data in parallel
+        loadSystemInfo(routerId);
+        loadNetworkInfo(routerId);
+        loadServicesInfo(routerId);
+        loadLogsInfo(routerId);
+      }
+      
+      function loadSystemInfo(routerId) {
+        fetch(`/api/routers/${routerId}/system`)
+          .then(response => response.json())
+          .then(data => {
+            systemInfo = data;
+            updateSystemTab(data);
+          })
+          .catch(error => {
+            console.error('Error loading system info:', error);
+            document.getElementById('basic-info').innerHTML = 
+              '<p class="error">Lỗi khi tải thông tin hệ thống</p>';
+          });
+      }
+      
+      function loadNetworkInfo(routerId) {
+        fetch(`/api/routers/${routerId}/network`)
+          .then(response => response.json())
+          .then(data => {
+            networkInfo = data;
+            updateNetworkTab(data);
+          })
+          .catch(error => {
+            console.error('Error loading network info:', error);
+            document.getElementById('interface-info').innerHTML = 
+              '<p class="error">Lỗi khi tải thông tin mạng</p>';
+          });
+      }
+      
+      function loadServicesInfo(routerId) {
+        fetch(`/api/routers/${routerId}/services`)
+          .then(response => response.json())
+          .then(data => {
+            servicesInfo = data;
+            updateServicesTab(data);
+          })
+          .catch(error => {
+            console.error('Error loading services info:', error);
+            document.getElementById('dhcp-server-info').innerHTML = 
+              '<p class="error">Lỗi khi tải thông tin dịch vụ</p>';
+          });
+      }
+      
+      function loadLogsInfo(routerId) {
+        fetch(`/api/routers/${routerId}/logs`)
+          .then(response => response.json())
+          .then(data => {
+            logsInfo = data;
+            updateLogsTab(data);
+          })
+          .catch(error => {
+            console.error('Error loading logs info:', error);
+            document.getElementById('system-logs-info').innerHTML = 
+              '<p class="error">Lỗi khi tải thông tin nhật ký</p>';
+          });
+      }
+      
+      function updateSystemTab(data) {
+        // Update basic info
+        const basicInfo = document.getElementById('basic-info');
+        basicInfo.innerHTML = `
+          <div class="info-label">Tên thiết bị:</div>
+          <div class="info-value">${data.identity}</div>
+          
+          <div class="info-label">Phiên bản RouterOS:</div>
+          <div class="info-value">${data.resourceInfo.version}</div>
+          
+          <div class="info-label">Thời gian hoạt động:</div>
+          <div class="info-value">${data.resourceInfo.uptime}</div>
+        `;
+        
+        // Update hardware info
+        const hardwareInfo = document.getElementById('hardware-info');
+        hardwareInfo.innerHTML = `
+          <div class="info-label">Model:</div>
+          <div class="info-value">${data.board.model}</div>
+          
+          <div class="info-label">Số sê-ri:</div>
+          <div class="info-value">${data.board.serialNumber}</div>
+          
+          <div class="info-label">Firmware:</div>
+          <div class="info-value">${data.board.firmware}</div>
+          
+          <div class="info-label">Phiên bản Firmware:</div>
+          <div class="info-value">${data.board.firmwareVersion}</div>
+          
+          <div class="info-label">Firmware mới hơn:</div>
+          <div class="info-value">${data.board.upgradeAvailable}</div>
+        `;
+        
+        // Update resource info
+        const resourceInfo = document.getElementById('resource-info');
+        resourceInfo.innerHTML = `
+          <div class="info-label">CPU:</div>
+          <div class="info-value">${data.resourceInfo.cpuCount} x ${data.resourceInfo.cpuFrequency}</div>
+          
+          <div class="info-label">Tải CPU:</div>
+          <div class="info-value">${data.resourceInfo.cpuLoad}</div>
+          
+          <div class="info-label">RAM:</div>
+          <div class="info-value">${data.resourceInfo.freeMemory} / ${data.resourceInfo.totalMemory}</div>
+          
+          <div class="info-label">Đĩa:</div>
+          <div class="info-value">${data.resourceInfo.freeHddSpace} / ${data.resourceInfo.totalHddSpace}</div>
+          
+          <div class="info-label">Kiến trúc:</div>
+          <div class="info-value">${data.resourceInfo.architecture}</div>
+          
+          <div class="info-label">Build time:</div>
+          <div class="info-value">${data.resourceInfo.buildTime}</div>
+        `;
+        
+        // Update health info
+        const healthInfo = document.getElementById('health-info');
+        healthInfo.innerHTML = `
+          <div class="info-label">Nhiệt độ:</div>
+          <div class="info-value">${data.health.temperature}</div>
+          
+          <div class="info-label">Nhiệt độ CPU:</div>
+          <div class="info-value">${data.health.cpuTemperature}</div>
+          
+          <div class="info-label">Điện áp:</div>
+          <div class="info-value">${data.health.voltage}</div>
+          
+          <div class="info-label">License level:</div>
+          <div class="info-value">${data.license.level}</div>
+        `;
+      }
+      
+      function updateNetworkTab(data) {
+        // Update interfaces table
+        const interfaceInfo = document.getElementById('interface-info');
+        if (data.interfaces.length === 0) {
+          interfaceInfo.innerHTML = '<p>Không có interface nào</p>';
+        } else {
+          let html = `
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Tên</th>
+                  <th>Loại</th>
+                  <th>MAC Address</th>
+                  <th>MTU</th>
+                  <th>Trạng thái</th>
+                  <th>RX Bytes</th>
+                  <th>TX Bytes</th>
+                  <th>RX/TX Errors</th>
+                </tr>
+              </thead>
+              <tbody>
+          `;
+          
+          data.interfaces.forEach(iface => {
+            html += `
+              <tr>
+                <td>${iface.name}</td>
+                <td>${iface.type}</td>
+                <td>${iface.macAddress}</td>
+                <td>${iface.mtu}</td>
+                <td><span class="status-badge ${iface.running === 'Hoạt động' ? 'status-active' : 'status-inactive'}">${iface.running}</span></td>
+                <td>${iface.rxByte}</td>
+                <td>${iface.txByte}</td>
+                <td>${iface.rxError}/${iface.txError}</td>
+              </tr>
+            `;
+          });
+          
+          html += `
+              </tbody>
+            </table>
+          `;
+          
+          interfaceInfo.innerHTML = html;
+        }
+        
+        // Update IP addresses table
+        const ipAddressInfo = document.getElementById('ip-address-info');
+        if (data.ipAddresses.length === 0) {
+          ipAddressInfo.innerHTML = '<p>Không có địa chỉ IP nào</p>';
+        } else {
+          let html = `
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Địa chỉ</th>
+                  <th>Network</th>
+                  <th>Interface</th>
+                  <th>Loại</th>
+                </tr>
+              </thead>
+              <tbody>
+          `;
+          
+          data.ipAddresses.forEach(ip => {
+            html += `
+              <tr>
+                <td>${ip.address}</td>
+                <td>${ip.network}</td>
+                <td>${ip.interface}</td>
+                <td>${ip.dynamic}</td>
+              </tr>
+            `;
+          });
+          
+          html += `
+              </tbody>
+            </table>
+          `;
+          
+          ipAddressInfo.innerHTML = html;
+        }
+        
+        // Update ARP table
+        const arpTableInfo = document.getElementById('arp-table-info');
+        if (data.arpTable.length === 0) {
+          arpTableInfo.innerHTML = '<p>Không có mục nào trong bảng ARP</p>';
+        } else {
+          let html = `
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Địa chỉ IP</th>
+                  <th>Địa chỉ MAC</th>
+                  <th>Interface</th>
+                  <th>Loại</th>
+                </tr>
+              </thead>
+              <tbody>
+          `;
+          
+          data.arpTable.forEach(arp => {
+            html += `
+              <tr>
+                <td>${arp.address}</td>
+                <td>${arp.macAddress}</td>
+                <td>${arp.interface}</td>
+                <td>${arp.dynamic}</td>
+              </tr>
+            `;
+          });
+          
+          html += `
+              </tbody>
+            </table>
+          `;
+          
+          arpTableInfo.innerHTML = html;
+        }
+        
+        // Update routing table
+        const routingTableInfo = document.getElementById('routing-table-info');
+        if (data.routingTable.length === 0) {
+          routingTableInfo.innerHTML = '<p>Không có mục nào trong bảng định tuyến</p>';
+        } else {
+          let html = `
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Đích</th>
+                  <th>Gateway</th>
+                  <th>Khoảng cách</th>
+                  <th>Interface</th>
+                  <th>Loại</th>
+                  <th>Trạng thái</th>
+                </tr>
+              </thead>
+              <tbody>
+          `;
+          
+          data.routingTable.forEach(route => {
+            html += `
+              <tr>
+                <td>${route.dst}</td>
+                <td>${route.gateway}</td>
+                <td>${route.distance}</td>
+                <td>${route.interface}</td>
+                <td>${route.static}</td>
+                <td><span class="status-badge ${route.active === 'Đang hoạt động' ? 'status-active' : 'status-inactive'}">${route.active}</span></td>
+              </tr>
+            `;
+          });
+          
+          html += `
+              </tbody>
+            </table>
+          `;
+          
+          routingTableInfo.innerHTML = html;
+        }
+      }
+      
+      function updateServicesTab(data) {
+        // Update DHCP servers
+        const dhcpServerInfo = document.getElementById('dhcp-server-info');
+        if (!data.dhcp || !data.dhcp.servers || data.dhcp.servers.length === 0) {
+          dhcpServerInfo.innerHTML = '<p>Không có DHCP server nào</p>';
+        } else {
+          let html = `
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Tên</th>
+                  <th>Interface</th>
+                  <th>Thời gian thuê</th>
+                  <th>Address Pool</th>
+                  <th>Trạng thái</th>
+                </tr>
+              </thead>
+              <tbody>
+          `;
+          
+          data.dhcp.servers.forEach(server => {
+            html += `
+              <tr>
+                <td>${server.name}</td>
+                <td>${server.interface}</td>
+                <td>${server.leaseTime}</td>
+                <td>${server.addressPool}</td>
+                <td><span class="status-badge ${server.disabled === 'Đã kích hoạt' ? 'status-active' : 'status-inactive'}">${server.disabled}</span></td>
+              </tr>
+            `;
+          });
+          
+          html += `
+              </tbody>
+            </table>
+          `;
+          
+          dhcpServerInfo.innerHTML = html;
+        }
+        
+        // Update DHCP leases
+        const dhcpLeaseInfo = document.getElementById('dhcp-lease-info');
+        if (!data.dhcp || !data.dhcp.leases || data.dhcp.leases.length === 0) {
+          dhcpLeaseInfo.innerHTML = '<p>Không có DHCP lease nào</p>';
+        } else {
+          let html = `
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Địa chỉ IP</th>
+                  <th>Địa chỉ MAC</th>
+                  <th>Tên máy chủ</th>
+                  <th>Hết hạn sau</th>
+                  <th>Trạng thái</th>
+                  <th>Loại</th>
+                </tr>
+              </thead>
+              <tbody>
+          `;
+          
+          data.dhcp.leases.forEach(lease => {
+            html += `
+              <tr>
+                <td>${lease.address}</td>
+                <td>${lease.macAddress}</td>
+                <td>${lease.hostName}</td>
+                <td>${lease.expiresAfter}</td>
+                <td>${lease.status}</td>
+                <td>${lease.dynamic}</td>
+              </tr>
+            `;
+          });
+          
+          html += `
+              </tbody>
+            </table>
+          `;
+          
+          dhcpLeaseInfo.innerHTML = html;
+        }
+        
+        // Update firewall rules
+        const firewallRulesInfo = document.getElementById('firewall-rules-info');
+        if (!data.firewall || !data.firewall.filterRules || data.firewall.filterRules.length === 0) {
+          firewallRulesInfo.innerHTML = '<p>Không có firewall rule nào</p>';
+        } else {
+          let html = `
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Chain</th>
+                  <th>Hành động</th>
+                  <th>Giao thức</th>
+                  <th>Nguồn</th>
+                  <th>Cổng nguồn</th>
+                  <th>Đích</th>
+                  <th>Cổng đích</th>
+                  <th>Trạng thái</th>
+                </tr>
+              </thead>
+              <tbody>
+          `;
+          
+          data.firewall.filterRules.forEach(rule => {
+            html += `
+              <tr>
+                <td>${rule.chain}</td>
+                <td>${rule.action}</td>
+                <td>${rule.protocol}</td>
+                <td>${rule.srcAddress}</td>
+                <td>${rule.srcPort}</td>
+                <td>${rule.dstAddress}</td>
+                <td>${rule.dstPort}</td>
+                <td><span class="status-badge ${rule.disabled === 'Đã kích hoạt' ? 'status-active' : 'status-inactive'}">${rule.disabled}</span></td>
+              </tr>
+            `;
+          });
+          
+          html += `
+              </tbody>
+            </table>
+          `;
+          
+          firewallRulesInfo.innerHTML = html;
+        }
+        
+        // Update NAT rules
+        const natRulesInfo = document.getElementById('nat-rules-info');
+        if (!data.firewall || !data.firewall.natRules || data.firewall.natRules.length === 0) {
+          natRulesInfo.innerHTML = '<p>Không có NAT rule nào</p>';
+        } else {
+          let html = `
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Chain</th>
+                  <th>Hành động</th>
+                  <th>Nguồn</th>
+                  <th>Đích</th>
+                  <th>To Address</th>
+                  <th>To Port</th>
+                  <th>Trạng thái</th>
+                </tr>
+              </thead>
+              <tbody>
+          `;
+          
+          data.firewall.natRules.forEach(rule => {
+            html += `
+              <tr>
+                <td>${rule.chain}</td>
+                <td>${rule.action}</td>
+                <td>${rule.srcAddress}</td>
+                <td>${rule.dstAddress}</td>
+                <td>${rule.toAddress}</td>
+                <td>${rule.toPort}</td>
+                <td><span class="status-badge ${rule.disabled === 'Đã kích hoạt' ? 'status-active' : 'status-inactive'}">${rule.disabled}</span></td>
+              </tr>
+            `;
+          });
+          
+          html += `
+              </tbody>
+            </table>
+          `;
+          
+          natRulesInfo.innerHTML = html;
+        }
+        
+        // Update wireless interfaces
+        const wirelessInfo = document.getElementById('wireless-info');
+        if (!data.wireless || !data.wireless.interfaces || data.wireless.interfaces.length === 0) {
+          wirelessInfo.innerHTML = '<p>Không có interface wireless nào</p>';
+        } else {
+          let html = `
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Tên</th>
+                  <th>SSID</th>
+                  <th>Band</th>
+                  <th>Tần số</th>
+                  <th>Độ rộng kênh</th>
+                  <th>Chế độ</th>
+                  <th>Trạng thái</th>
+                </tr>
+              </thead>
+              <tbody>
+          `;
+          
+          data.wireless.interfaces.forEach(wlan => {
+            html += `
+              <tr>
+                <td>${wlan.name}</td>
+                <td>${wlan.ssid}</td>
+                <td>${wlan.band}</td>
+                <td>${wlan.frequency}</td>
+                <td>${wlan.channelWidth}</td>
+                <td>${wlan.mode}</td>
+                <td><span class="status-badge ${wlan.disabled === 'Đã kích hoạt' ? 'status-active' : 'status-inactive'}">${wlan.disabled}</span></td>
+              </tr>
+            `;
+          });
+          
+          html += `
+              </tbody>
+            </table>
+          `;
+          
+          wirelessInfo.innerHTML = html;
+        }
+        
+        // Update wireless clients
+        const wirelessClientsInfo = document.getElementById('wireless-clients-info');
+        if (!data.wireless || !data.wireless.clients || data.wireless.clients.length === 0) {
+          wirelessClientsInfo.innerHTML = '<p>Không có client wireless nào</p>';
+        } else {
+          let html = `
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Interface</th>
+                  <th>Địa chỉ MAC</th>
+                  <th>Cường độ tín hiệu</th>
+                  <th>TX Rate</th>
+                  <th>RX Rate</th>
+                  <th>Thời gian kết nối</th>
+                </tr>
+              </thead>
+              <tbody>
+          `;
+          
+          data.wireless.clients.forEach(client => {
+            html += `
+              <tr>
+                <td>${client.interface}</td>
+                <td>${client.macAddress}</td>
+                <td>${client.signalStrength}</td>
+                <td>${client.txRate}</td>
+                <td>${client.rxRate}</td>
+                <td>${client.uptime}</td>
+              </tr>
+            `;
+          });
+          
+          html += `
+              </tbody>
+            </table>
+          `;
+          
+          wirelessClientsInfo.innerHTML = html;
+        }
+      }
+      
+      function updateLogsTab(data) {
+        // Update system logs
+        const systemLogsInfo = document.getElementById('system-logs-info');
+        if (!data.systemLogs || data.systemLogs.length === 0) {
+          systemLogsInfo.innerHTML = '<p>Không có nhật ký hệ thống nào</p>';
+        } else {
+          let html = `
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Thời gian</th>
+                  <th>Chủ đề</th>
+                  <th>Thông điệp</th>
+                </tr>
+              </thead>
+              <tbody>
+          `;
+          
+          data.systemLogs.forEach(log => {
+            html += `
+              <tr>
+                <td>${log.time}</td>
+                <td>${log.topics}</td>
+                <td>${log.message}</td>
+              </tr>
+            `;
+          });
+          
+          html += `
+              </tbody>
+            </table>
+          `;
+          
+          systemLogsInfo.innerHTML = html;
+        }
+        
+        // Update users
+        const usersInfo = document.getElementById('users-info');
+        if (!data.users || data.users.length === 0) {
+          usersInfo.innerHTML = '<p>Không có người dùng nào</p>';
+        } else {
+          let html = `
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Tên</th>
+                  <th>Nhóm</th>
+                  <th>Lần đăng nhập cuối</th>
+                </tr>
+              </thead>
+              <tbody>
+          `;
+          
+          data.users.forEach(user => {
+            html += `
+              <tr>
+                <td>${user.name}</td>
+                <td>${user.group}</td>
+                <td>${user.lastLogin}</td>
+              </tr>
+            `;
+          });
+          
+          html += `
+              </tbody>
+            </table>
+          `;
+          
+          usersInfo.innerHTML = html;
+        }
+        
+        // Update other services
+        const otherServicesInfo = document.getElementById('other-services-info');
+        if (!data.services) {
+          otherServicesInfo.innerHTML = '<p>Không có thông tin dịch vụ nào</p>';
+        } else {
+          let html = '';
+          
+          // SNMP Info
+          if (data.services.snmp) {
+            html += `
+              <div class="info-label">SNMP:</div>
+              <div class="info-value">${data.services.snmp.enabled}</div>
+              
+              <div class="info-label">Community:</div>
+              <div class="info-value">${data.services.snmp.community}</div>
+              
+              <div class="info-label">Vị trí:</div>
+              <div class="info-value">${data.services.snmp.location}</div>
+            `;
+          }
+          
+          // DNS Info
+          if (data.services.dns) {
+            html += `
+              <div class="info-label">DNS Servers:</div>
+              <div class="info-value">${data.services.dns.servers}</div>
+              
+              <div class="info-label">Cho phép yêu cầu từ xa:</div>
+              <div class="info-value">${data.services.dns.allowRemoteRequests}</div>
+            `;
+          }
+          
+          // NTP Info
+          if (data.services.ntp) {
+            html += `
+              <div class="info-label">NTP Client:</div>
+              <div class="info-value">${data.services.ntp.enabled}</div>
+              
+              <div class="info-label">NTP Servers:</div>
+              <div class="info-value">${data.services.ntp.servers}</div>
+            `;
+          }
+          
+          otherServicesInfo.innerHTML = html || '<p>Không có thông tin dịch vụ nào</p>';
+        }
+      }
+    });
+  </script>
+</body>
+</html>

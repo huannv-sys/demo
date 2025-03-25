@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý Site - Mikrotik Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .site-card {
+            background-color: #fff;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .site-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .site-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+        
+        .site-location {
+            font-size: 0.9rem;
+            color: #7f8c8d;
+            margin-bottom: 10px;
+        }
+        
+        .router-list {
+            border-top: 1px solid #ecf0f1;
+            padding-top: 10px;
+        }
+        
+        .router-item {
+            display: flex;
+            padding: 8px 5px;
+            border-radius: 4px;
+            margin-bottom: 5px;
+            transition: all 0.2s ease;
+        }
+        
+        .router-item:hover {
+            background-color: #f8f9fa;
+        }
+        
+        .router-name {
+            flex: 1;
+            font-weight: 500;
+        }
+        
+        .router-model {
+            width: 100px;
+            color: #7f8c8d;
+        }
+        
+        .router-status {
+            width: 80px;
+            text-align: center;
+        }
+        
+        .status-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 5px;
+        }
+        
+        .status-online {
+            background-color: #2ecc71;
+        }
+        
+        .status-offline {
+            background-color: #e74c3c;
+        }
+        
+        .status-unknown {
+            background-color: #95a5a6;
+        }
+        
+        .site-summary {
+            background-color: #f8f9fa;
+            padding: 10px;
+            border-radius: 4px;
+            margin-top: 10px;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <div class="logo">Mikrotik Dashboard</div>
+        <nav>
+            <ul>
+                <li><a href="index.html">Trang chủ</a></li>
+                <li><a href="dashboard.html">Dashboard</a></li>
+                <li><a href="sites.html" class="active">Quản lý Site</a></li>
+                <li><a href="config.html">Cấu hình</a></li>
+                <li><a href="help.html">Trợ giúp</a></li>
+                <li><a href="api-docs.html">API</a></li>
+            </ul>
+        </nav>
+    </div>
+    
+    <div class="main">
+        <div class="header">
+            <h1>Quản lý Site và Thiết bị</h1>
+            <div class="user-info">
+                <span>Admin</span>
+            </div>
+        </div>
+        
+        <div class="content">
+            <div class="card">
+                <h2>Danh sách Site</h2>
+                <p>Quản lý các site và thiết bị Mikrotik theo từng vị trí địa lý</p>
+                
+                <div class="filter-bar">
+                    <input type="text" id="site-search" placeholder="Tìm kiếm site...">
+                    <button id="add-site-btn" class="btn primary-btn">Thêm Site mới</button>
+                </div>
+                
+                <div id="site-container" class="loading">
+                    <div class="loading-indicator">Đang tải danh sách site...</div>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h2>Thống kê chung</h2>
+                <div class="stat-grid">
+                    <div class="stat-item">
+                        <div class="stat-value" id="total-sites">-</div>
+                        <div class="stat-label">Tổng số site</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="total-routers">-</div>
+                        <div class="stat-label">Tổng số thiết bị</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="online-routers">-</div>
+                        <div class="stat-label">Thiết bị online</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="offline-routers">-</div>
+                        <div class="stat-label">Thiết bị offline</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal Add Site -->
+    <div id="add-site-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Thêm Site mới</h2>
+                <span class="close">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form id="add-site-form">
+                    <div class="form-group">
+                        <label for="site-name">Tên Site</label>
+                        <input type="text" id="site-name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="site-location">Vị trí</label>
+                        <input type="text" id="site-location" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="site-description">Mô tả</label>
+                        <textarea id="site-description"></textarea>
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" class="btn secondary-btn" id="cancel-add-site">Hủy</button>
+                        <button type="submit" class="btn primary-btn">Lưu</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Elements
+        const siteContainer = document.getElementById('site-container');
+        const siteSearchInput = document.getElementById('site-search');
+        const addSiteBtn = document.getElementById('add-site-btn');
+        const addSiteModal = document.getElementById('add-site-modal');
+        const cancelAddSiteBtn = document.getElementById('cancel-add-site');
+        const addSiteForm = document.getElementById('add-site-form');
+        const closeBtn = document.querySelector('.close');
+        const totalSitesEl = document.getElementById('total-sites');
+        const totalRoutersEl = document.getElementById('total-routers');
+        const onlineRoutersEl = document.getElementById('online-routers');
+        const offlineRoutersEl = document.getElementById('offline-routers');
+        
+        // Router status cache
+        let routerStatusCache = {};
+        
+        // Fetch sites and routers
+        async function fetchSites() {
+            try {
+                siteContainer.classList.add('loading');
+                siteContainer.innerHTML = '<div class="loading-indicator">Đang tải danh sách site...</div>';
+                
+                const response = await fetch('/api/sites');
+                if (!response.ok) {
+                    throw new Error('Không thể tải dữ liệu site');
+                }
+                
+                const sites = await response.json();
+                
+                // Fetch router status
+                await fetchRouterStatus();
+                
+                // Render sites
+                renderSites(sites);
+                
+                // Update statistics
+                updateStatistics(sites);
+                
+                siteContainer.classList.remove('loading');
+            } catch (error) {
+                console.error('Error:', error);
+                siteContainer.innerHTML = `<div class="error-message">Lỗi: ${error.message}</div>`;
+                siteContainer.classList.remove('loading');
+            }
+        }
+        
+        // Fetch router status
+        async function fetchRouterStatus() {
+            try {
+                const response = await fetch('/api/routers/status');
+                if (!response.ok) {
+                    throw new Error('Không thể tải trạng thái router');
+                }
+                
+                const statusList = await response.json();
+                
+                // Build cache object for quick lookup
+                routerStatusCache = {};
+                statusList.forEach(router => {
+                    routerStatusCache[router.id] = router;
+                });
+                
+                return routerStatusCache;
+            } catch (error) {
+                console.error('Error fetching router status:', error);
+                return {};
+            }
+        }
+        
+        // Render sites
+        function renderSites(sites) {
+            if (sites.length === 0) {
+                siteContainer.innerHTML = '<div class="empty-state">Không có site nào được cấu hình. Hãy thêm site mới.</div>';
+                return;
+            }
+            
+            let html = '';
+            
+            sites.forEach(site => {
+                let routersHtml = '';
+                let onlineCount = 0;
+                let offlineCount = 0;
+                
+                site.routers.forEach(router => {
+                    const status = routerStatusCache[router.id] ? routerStatusCache[router.id].status : 'unknown';
+                    
+                    if (status === 'online') onlineCount++;
+                    if (status === 'offline') offlineCount++;
+                    
+                    routersHtml += `
+                        <div class="router-item" onclick="window.location.href='router-detail.html?id=${router.id}'">
+                            <div class="router-name">${router.name}</div>
+                            <div class="router-model">${router.model}</div>
+                            <div class="router-status">
+                                <span class="status-indicator status-${status}"></span>
+                                ${status === 'online' ? 'Hoạt động' : status === 'offline' ? 'Ngoại tuyến' : 'Không rõ'}
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                html += `
+                    <div class="site-card">
+                        <div class="site-header">
+                            <div class="site-title">${site.name}</div>
+                            <button class="btn small-btn" onclick="editSite('${site.id}')">Chỉnh sửa</button>
+                        </div>
+                        <div class="site-location">
+                            <i class="icon-location"></i> ${site.location}
+                        </div>
+                        <div class="router-list">
+                            ${routersHtml}
+                        </div>
+                        <div class="site-summary">
+                            Tổng số: ${site.routers.length} thiết bị | 
+                            Online: ${onlineCount} | 
+                            Offline: ${offlineCount} |
+                            <a href="#" onclick="manageSite('${site.id}')">Quản lý thiết bị</a>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            siteContainer.innerHTML = html;
+        }
+        
+        // Update statistics
+        function updateStatistics(sites) {
+            let totalRouters = 0;
+            let onlineRouters = 0;
+            let offlineRouters = 0;
+            
+            sites.forEach(site => {
+                totalRouters += site.routers.length;
+                
+                site.routers.forEach(router => {
+                    const status = routerStatusCache[router.id] ? routerStatusCache[router.id].status : 'unknown';
+                    if (status === 'online') onlineRouters++;
+                    if (status === 'offline') offlineRouters++;
+                });
+            });
+            
+            totalSitesEl.textContent = sites.length;
+            totalRoutersEl.textContent = totalRouters;
+            onlineRoutersEl.textContent = onlineRouters;
+            offlineRoutersEl.textContent = offlineRouters;
+        }
+        
+        // Edit site
+        function editSite(siteId) {
+            alert('Chức năng đang phát triển: Chỉnh sửa site ' + siteId);
+        }
+        
+        // Manage site devices
+        function manageSite(siteId) {
+            alert('Chức năng đang phát triển: Quản lý thiết bị cho site ' + siteId);
+        }
+        
+        // Modal handlers
+        addSiteBtn.addEventListener('click', () => {
+            addSiteModal.style.display = 'block';
+        });
+        
+        closeBtn.addEventListener('click', () => {
+            addSiteModal.style.display = 'none';
+        });
+        
+        cancelAddSiteBtn.addEventListener('click', () => {
+            addSiteModal.style.display = 'none';
+        });
+        
+        window.addEventListener('click', (event) => {
+            if (event.target === addSiteModal) {
+                addSiteModal.style.display = 'none';
+            }
+        });
+        
+        // Form submission
+        addSiteForm.addEventListener('submit', (event) => {
+            event.preventDefault();
+            // Chức năng sẽ được phát triển sau
+            alert('Chức năng thêm site mới đang được phát triển.');
+            addSiteModal.style.display = 'none';
+        });
+        
+        // Search functionality
+        siteSearchInput.addEventListener('input', (event) => {
+            const searchTerm = event.target.value.toLowerCase();
+            const siteCards = document.querySelectorAll('.site-card');
+            
+            siteCards.forEach(card => {
+                const siteName = card.querySelector('.site-title').textContent.toLowerCase();
+                const siteLocation = card.querySelector('.site-location').textContent.toLowerCase();
+                
+                if (siteName.includes(searchTerm) || siteLocation.includes(searchTerm)) {
+                    card.style.display = 'block';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        });
+        
+        // Auto refresh every 30 seconds
+        const AUTO_REFRESH_INTERVAL = 30000;
+        setInterval(fetchSites, AUTO_REFRESH_INTERVAL);
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', fetchSites);
+    </script>
+</body>
+</html>
